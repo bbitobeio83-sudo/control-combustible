@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Control Combustible · FSUTCP</title>
+<style>
+:root{
+  --v:#1a7a45;--vo:#0d3320;--vm:#145c34;--vc:#2daa61;
+  --am:#f5c842;--ro:#e5392a;
+  --c1:#112b1c;--c2:#0f2318;--tx:#e8f5ed;--t2:#8eba9e;
+  --bd:rgba(45,170,97,0.25);
+  --f:'Segoe UI',system-ui,sans-serif;--m:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--f);background:var(--vo);color:var(--tx);min-height:100dvh}
+.hdr{background:var(--c2);border-bottom:1px solid var(--bd);padding:11px 15px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.hdr-ic{width:36px;height:36px;background:var(--v);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.hdr h1{font-size:13px;font-weight:700}
+.hdr p{font-size:10px;color:var(--t2);margin-top:1px}
+.badge{margin-left:auto;background:var(--v);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:var(--m);white-space:nowrap}
+.tabs{display:flex;background:var(--c2);border-bottom:1px solid var(--bd)}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab.on{color:var(--vc);border-color:var(--vc)}
+.scr{display:none;padding:15px}
+.scr.on{display:block}
+
+/* MODE SWITCHER */
+.mode-sw{display:flex;background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:4px;margin-bottom:13px;gap:4px}
+.mode-btn{flex:1;padding:9px 8px;border:none;border-radius:8px;font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--t2)}
+.mode-btn.on{background:var(--v);color:#fff}
+
+/* CAMERA */
+.cam-box{background:var(--c1);border:1px solid var(--bd);border-radius:13px;overflow:hidden;margin-bottom:13px;display:none}
+.cam-box.on{display:block}
+.cam-wrap{position:relative;width:100%;background:#000;aspect-ratio:4/3}
+#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+#cvs{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;pointer-events:none}
+.cam-ov{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.qrf{width:55%;aspect-ratio:1;border:2.5px solid var(--vc);border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);position:relative}
+.qrf::before,.qrf::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--am);border-style:solid}
+.qrf::before{top:-3px;left:-3px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.qrf::after{bottom:-3px;right:-3px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.cam-st{padding:10px 14px;font-size:11px;text-align:center;font-family:var(--m);color:var(--t2);min-height:36px;display:flex;align-items:center;justify-content:center}
+.cam-st.ok{color:var(--vc)} .cam-st.er{color:var(--ro)}
+.btn-cam{width:100%;padding:13px;background:var(--v);color:#fff;border:none;border-radius:11px;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:13px;transition:opacity .15s}
+.btn-cam:active{opacity:.8} .btn-cam.stop{background:#b71c1c}
+
+/* SEARCH */
+.search-box{background:var(--c1);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:13px;display:none}
+.search-box.on{display:block}
+.inp-wr{position:relative}
+.inp-wr input{width:100%;padding:13px 40px 13px 14px;background:var(--vo);border:2px solid var(--v);border-radius:10px;font-family:var(--f);font-size:16px;color:var(--tx);outline:none;-webkit-appearance:none}
+.inp-wr input:focus{border-color:var(--vc)}
+.inp-wr input::placeholder{color:var(--t2);font-size:13px}
+.clr-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;padding:4px;line-height:1}
+.results{margin-top:10px}
+.r-item{background:var(--vo);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .12s}
+.r-item:active{background:var(--vm)}
+.r-ic{width:32px;height:32px;border-radius:7px;background:var(--v);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.r-nom{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-sub{font-size:10px;color:var(--t2);margin-top:1px;font-family:var(--m)}
+.r-tip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.rt-t{background:var(--v);color:#fff} .rt-c{background:var(--am);color:#333}
+.hint{text-align:center;padding:16px 10px;color:var(--t2);font-size:12px;line-height:1.7}
+
+/* CARD */
+.ccard{background:var(--c1);border:2px solid var(--vc);border-radius:13px;padding:13px;margin-bottom:13px;display:none;animation:si .2s ease}
+.ccard.on{display:block}
+@keyframes si{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cc-l{font-size:9px;color:var(--t2);font-family:var(--m);text-transform:uppercase;letter-spacing:.05em}
+.cc-v{font-size:15px;font-weight:700;color:var(--vc);margin-top:1px;margin-bottom:8px}
+.cc-v.sm{font-size:12px;color:var(--tx)}
+.cc-r{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-ch{background:none;border:1px solid var(--bd);border-radius:7px;color:var(--t2);font-size:11px;padding:5px 10px;cursor:pointer;margin-top:4px;font-family:var(--f)}
+
+/* LITROS */
+.litg{background:var(--c1);border:1px solid var(--bd);border-radius:13px;padding:13px;margin-bottom:13px;display:none}
+.litg.on{display:block}
+.litg label{font-size:11px;color:var(--t2);display:block;margin-bottom:7px}
+.litwrap{display:flex;align-items:center;gap:8px}
+#litros{flex:1;padding:12px;background:var(--vo);border:2px solid var(--v);border-radius:10px;font-family:var(--m);font-size:22px;font-weight:700;color:var(--am);text-align:center;outline:none;-webkit-appearance:none}
+#litros:focus{border-color:var(--vc)}
+.unit{font-size:12px;color:var(--t2);font-family:var(--m);flex-shrink:0}
+.qbtns{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.qb{flex:1;min-width:50px;padding:10px 4px;background:var(--vo);border:1px solid var(--bd);border-radius:8px;color:var(--vc);font-family:var(--m);font-size:13px;font-weight:700;cursor:pointer;text-align:center}
+.qb:active{background:var(--vm)}
+.btn-reg{width:100%;padding:15px;background:linear-gradient(135deg,var(--vc),var(--v));color:#fff;border:none;border-radius:13px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.btn-reg.on{display:flex}
+.btn-reg:active{opacity:.85}
+.flash{display:none;background:#0a3018;border:2px solid var(--vc);border-radius:12px;padding:13px 14px;margin-bottom:13px;font-size:14px;color:var(--vc);font-weight:700;align-items:center;gap:9px;animation:si .2s ease}
+.flash.on{display:flex}
+
+/* HIST */
+.ltbar{background:var(--c1);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.ltbig{font-family:var(--m);font-size:28px;font-weight:700;color:var(--am)}
+.ltsub{font-size:10px;color:var(--t2);margin-top:1px}
+.stat-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:10px 6px;text-align:center}
+.stat .n{font-size:20px;font-weight:700;color:var(--vc);font-family:var(--m)}
+.stat .l{font-size:9px;color:var(--t2);margin-top:1px}
+.btn-exp{width:100%;padding:13px;background:var(--c1);border:1.5px solid var(--v);border-radius:11px;color:var(--vc);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:15px}
+.btn-exp:active{background:var(--vm)}
+.sec-t{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;font-family:var(--m);margin-bottom:8px}
+.vi{background:var(--c1);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.vdot{width:8px;height:8px;border-radius:50%;background:var(--vc);flex-shrink:0}
+.vnm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vsb{font-size:10px;color:var(--t2);margin-top:1px;font-family:var(--m)}
+.vlt{font-family:var(--m);font-size:14px;font-weight:700;color:var(--am);flex-shrink:0}
+.empty{text-align:center;padding:40px 16px;color:var(--t2);font-size:12px}
+
+/* CFG */
+.cfg-l{font-size:11px;color:var(--t2);margin-bottom:5px;display:block}
+.cfg-i{width:100%;padding:12px 13px;background:var(--c1);border:1.5px solid var(--bd);border-radius:10px;font-family:var(--f);font-size:14px;color:var(--tx);outline:none;margin-bottom:10px;-webkit-appearance:none}
+.cfg-i:focus{border-color:var(--v)}
+.cfg-i::placeholder{color:var(--t2)}
+.cfg-row{background:var(--c1);border:1px solid var(--bd);border-radius:9px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;cursor:pointer}
+.cfg-row span{font-size:12px} .cfg-val{font-family:var(--m);font-size:11px;color:var(--vc)}
+.btn-del{width:100%;padding:12px;background:transparent;border:1.5px solid rgba(229,57,42,.35);border-radius:11px;color:var(--ro);font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;margin-top:8px}
+.btn-del:active{background:rgba(229,57,42,.12)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-ic">⛽</div>
+  <div><h1>Control Combustible</h1><p>FSUTCP · Cobija · Pando</p></div>
+  <div class="badge" id="badge">0 ventas</div>
+</div>
+<div class="tabs">
+  <div class="tab on"  onclick="goTab('venta')">⛽ Venta</div>
+  <div class="tab"     onclick="goTab('hist')">📋 Historial</div>
+  <div class="tab"     onclick="goTab('cfg')">⚙️ Config</div>
+</div>
+
+<canvas id="cvs" style="display:none"></canvas>
+
+<!-- VENTA -->
+<div class="scr on" id="scr-venta">
+  <div class="flash" id="flash"><span style="font-size:18px">✓</span><span id="flash-msg"></span></div>
+
+  <!-- Selector de modo -->
+  <div class="mode-sw">
+    <button class="mode-btn on" id="mb-cam" onclick="setMode('cam')">📷 Escanear código</button>
+    <button class="mode-btn"    id="mb-bus" onclick="setMode('bus')">🔍 Buscar por CI</button>
+  </div>
+
+  <!-- MODO CÁMARA -->
+  <div class="cam-box on" id="cam-box">
+    <div class="cam-wrap">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="cvs" style="display:none"></canvas>
+      <div class="cam-ov"><div class="qrf"></div></div>
+    </div>
+    <div class="cam-st" id="cam-st">Toca "Activar escáner" y apunta al código de barra</div>
+  </div>
+  <button class="btn-cam" id="btn-cam" onclick="toggleCam()">
+    <span id="cam-ico">📷</span><span id="cam-txt">Activar escáner</span>
+  </button>
+
+  <!-- MODO BÚSQUEDA -->
+  <div class="search-box" id="search-box">
+    <div class="inp-wr">
+      <input type="search" id="buscar" placeholder="Escribe CI o nombre..."
+        inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off"
+        oninput="buscar(this.value)">
+      <button class="clr-btn" onclick="limpiar()">✕</button>
+    </div>
+    <div class="results" id="results">
+      <div class="hint">Escribe el <b>CI</b> o el <b>nombre</b> del comunario</div>
+    </div>
+  </div>
+
+  <!-- Comunario seleccionado -->
+  <div class="ccard" id="ccard">
+    <div class="cc-l">Comunario identificado</div>
+    <div class="cc-v" id="c-nom">—</div>
+    <div class="cc-r">
+      <div><div class="cc-l">Comunidad</div><div class="cc-v sm" id="c-com">—</div></div>
+      <div><div class="cc-l">CI · Tipo</div><div class="cc-v sm" id="c-ci">—</div></div>
+    </div>
+    <button class="btn-ch" onclick="resetVenta()">↩ Cambiar persona</button>
+  </div>
+
+  <!-- Litros -->
+  <div class="litg" id="litg">
+    <label>Cantidad a despachar</label>
+    <div class="litwrap">
+      <input type="number" id="litros" placeholder="0" min="0.5" max="500" step="0.5" inputmode="decimal">
+      <span class="unit">litros</span>
+    </div>
+    <div class="qbtns">
+      <button class="qb" onclick="setL(5)">5L</button>
+      <button class="qb" onclick="setL(10)">10L</button>
+      <button class="qb" onclick="setL(20)">20L</button>
+      <button class="qb" onclick="setL(30)">30L</button>
+      <button class="qb" onclick="setL(40)">40L</button>
+    </div>
+  </div>
+  <button class="btn-reg" id="btn-reg" onclick="registrar()">✓ &nbsp;Registrar venta</button>
+</div>
+
+<!-- HISTORIAL -->
+<div class="scr" id="scr-hist">
+  <div class="ltbar"><span style="font-size:28px">🛢️</span>
+    <div><div class="ltbig" id="lt-tot">0</div><div class="ltsub">litros totales despachados</div></div>
+  </div>
+  <div class="stat-bar">
+    <div class="stat"><div class="n" id="s-v">0</div><div class="l">Ventas</div></div>
+    <div class="stat"><div class="n" id="s-c">0</div><div class="l">Comunidades</div></div>
+    <div class="stat"><div class="n" id="s-l">0</div><div class="l">Litros</div></div>
+  </div>
+  <button class="btn-exp" onclick="exportar()">📥 &nbsp;Exportar a Excel (CSV)</button>
+  <div class="sec-t">Registro de ventas</div>
+  <div id="lista"></div>
+</div>
+
+<!-- CONFIG -->
+<div class="scr" id="scr-cfg">
+  <div class="sec-t">Punto de venta</div>
+  <label class="cfg-l">Nombre del encargado</label>
+  <input class="cfg-i" id="c-enc" placeholder="Nombre del encargado" oninput="saveConf()">
+  <label class="cfg-l">Comunidad / punto base</label>
+  <input class="cfg-i" id="c-pto" placeholder="Ej: Cobija Centro" oninput="saveConf()">
+  <div class="sec-t" style="margin-top:4px">Límite por persona</div>
+  <label class="cfg-l">Cuota máxima de litros por visita</label>
+  <input class="cfg-i" id="c-cuota" type="number" placeholder="40" oninput="saveConf()" style="font-family:var(--m);font-size:18px;font-weight:700">
+  <div class="sec-t" style="margin-top:4px">Datos</div>
+  <div class="cfg-row"><span>Total registros</span><span class="cfg-val" id="c-cnt">0</span></div>
+  <div class="cfg-row" onclick="exportar()"><span>Exportar a Excel</span><span class="cfg-val">↓</span></div>
+  <button class="btn-del" onclick="delAll()">🗑 Borrar todos los registros</button>
+</div>
+
+<script>
+const DB = [{"nombre": "RENÉ CASANOVA MERELES", "ci": "1765429", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "1", "tipo": "Titular"}, {"nombre": "RAQUEL CASANOVA JARE", "ci": "5704919", "cargo": "VOCAL", "comunidad": "NUEVA ESPERANZA", "nro": "2", "tipo": "Titular"}, {"nombre": "KARIN ROIMAR ENCINAS GARRIDO", "ci": "9494278", "cargo": "VOCAL", "comunidad": "NUEVA ESPERANZA", "nro": "2C", "tipo": "Cónyuge"}, {"nombre": "REGINA CASANOVA JARE", "ci": "5704883", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "3", "tipo": "Titular"}, {"nombre": "JAIDER ROCA PEREZ", "ci": "4215175", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "3C", "tipo": "Cónyuge"}, {"nombre": "CESAR SUAREZ CRUZ", "ci": "1750257", "cargo": "STRIO. DE CONFLICTO", "comunidad": "NUEVA ESPERANZA", "nro": "4", "tipo": "Titular"}, {"nombre": "JORGINA PEREIRA LIMA", "ci": "1767350", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "5", "tipo": "Titular"}, {"nombre": "JOSÉ TORREZ QUETEGUARI", "ci": "1742733", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "6", "tipo": "Titular"}, {"nombre": "FATIMA RUIZ MERELES", "ci": "4200479", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "7", "tipo": "Titular"}, {"nombre": "REMIGIO AMACIFUEN MANIGUARI", "ci": "4206607", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "7C", "tipo": "Cónyuge"}, {"nombre": "DARIANA AMACIFUEN RUIZ", "ci": "4212769", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "8", "tipo": "Titular"}, {"nombre": "JAIRO MAMIO SUAREZ", "ci": "4216384", "cargo": "STRIO. DE ACTAS", "comunidad": "NUEVA ESPERANZA", "nro": "9", "tipo": "Titular"}, {"nombre": "DAYANA AMACIFUEN RUIZ", "ci": "4212771", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "10", "tipo": "Titular"}, {"nombre": "ALEXANDRO RUIZ PEREIRA", "ci": "4215259", "cargo": "VOCAL", "comunidad": "NUEVA ESPERANZA", "nro": "11", "tipo": "Titular"}, {"nombre": "LORENA ARTEAGA BISMARK", "ci": "5715764", "cargo": "VOCAL", "comunidad": "NUEVA ESPERANZA", "nro": "11C", "tipo": "Cónyuge"}, {"nombre": "MARINEUSA SOSA CASANOVA", "ci": "4203939", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "12", "tipo": "Titular"}, {"nombre": "CASILDO QUISPE NINA", "ci": "2379412", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "12C", "tipo": "Cónyuge"}, {"nombre": "ERDIN MAMIO RODRIGUEZ", "ci": "1765734", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "13", "tipo": "Titular"}, {"nombre": "MARIA YENNY MENDEZ PEDRAZA", "ci": "1764857", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "13C", "tipo": "Cónyuge"}, {"nombre": "FABIO PEREIRA RODRIGUEZ", "ci": "5709063", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "14", "tipo": "Titular"}, {"nombre": "JAVIER SUAREZ CASANOVA", "ci": "1768459", "cargo": "STRIO. DE EDUCACIO SALUD Y DEPORTES", "comunidad": "NUEVA ESPERANZA", "nro": "15", "tipo": "Titular"}, {"nombre": "YAMILY TORREZ VELEZ", "ci": "4215875", "cargo": "STRIO. DE EDUCACIO SALUD Y DEPORTES", "comunidad": "NUEVA ESPERANZA", "nro": "15C", "tipo": "Cónyuge"}, {"nombre": "ANA CASANOVA MERELLY", "ci": "1750278", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "16", "tipo": "Titular"}, {"nombre": "VICTOR SOUZA CASANOVA", "ci": "1767185", "cargo": "STRIO. GENERAL", "comunidad": "NUEVA ESPERANZA", "nro": "17", "tipo": "Titular"}, {"nombre": "CRISANTO SOSA CASANOVA", "ci": "4199734", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "18", "tipo": "Titular"}, {"nombre": "ARMANDO SUAREZ CASANOVA", "ci": "1767939", "cargo": "STRIO. TIERRA Y TERRITORIO", "comunidad": "NUEVA ESPERANZA", "nro": "19", "tipo": "Titular"}, {"nombre": "CESARINA SUAREZ CASANOVA", "ci": "4201646", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "20", "tipo": "Titular"}, {"nombre": "PASCUAL CRUZ RUIZ", "ci": "nan", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "20C", "tipo": "Cónyuge"}, {"nombre": "RONAL RIVA SUAREZ", "ci": "1767929", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "21", "tipo": "Titular"}, {"nombre": "NARCISO RIVA WACAMA", "ci": "5705262", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "21C", "tipo": "Cónyuge"}, {"nombre": "FEDERICO CASANOVA", "ci": "1767708", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "22", "tipo": "Titular"}, {"nombre": "TERESA MESIAS SIRIACO", "ci": "nan", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "22C", "tipo": "Cónyuge"}, {"nombre": "MARIO FELIPE CRUZ TARQUI", "ci": "2129586", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "23", "tipo": "Titular"}, {"nombre": "CARMEN RUIZ MERELES", "ci": "1750653", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "24", "tipo": "Titular"}, {"nombre": "JORGE DURI RAMIREZ", "ci": "1763404", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "24C", "tipo": "Cónyuge"}, {"nombre": "KADIR CASANOVA MESIAS", "ci": "4208862", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "25", "tipo": "Titular"}, {"nombre": "FRANZ MENDEZ PEDRAZA", "ci": "4201622", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "26", "tipo": "Titular"}, {"nombre": "FERNANDA MNDEZ CRUZ", "ci": "5708193", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "26C", "tipo": "Cónyuge"}, {"nombre": "GUERY CRUZ RUIZ", "ci": "4207888", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "27", "tipo": "Titular"}, {"nombre": "DANIA VITURINO CARDOZO", "ci": "5709772", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "27C", "tipo": "Cónyuge"}, {"nombre": "ADRIAN CAMARGO CABRERA", "ci": "4200321", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "28", "tipo": "Titular"}, {"nombre": "ANTONIA RUIZ MERELES", "ci": "1765858", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "28C", "tipo": "Cónyuge"}, {"nombre": "CARLOS CLAVIJO GUELLEN", "ci": "6960661", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "29", "tipo": "Titular"}, {"nombre": "ASTURIA MENDOZA VACA", "ci": "4207508", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "29C", "tipo": "Cónyuge"}, {"nombre": "AIZAR SALAS GONZALES", "ci": "2407441", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "30", "tipo": "Titular"}, {"nombre": "VIVIANO OPI CRISPIN", "ci": "1595236", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "31", "tipo": "Titular"}, {"nombre": "DELIA MURGA DE OPI", "ci": "7659342", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "31C", "tipo": "Cónyuge"}, {"nombre": "RUDDY OPI VILCA", "ci": "1766001", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "32", "tipo": "Titular"}, {"nombre": "HORTENCIA ORELLANA FLORES", "ci": "4083999", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "32C", "tipo": "Cónyuge"}, {"nombre": "LEONARDO RUIZ PEREIRA", "ci": "1769025", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "33", "tipo": "Titular"}, {"nombre": "MISUHITH DABEIBA FRANCO PEDRAZA", "ci": "1768260", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "33C", "tipo": "Cónyuge"}, {"nombre": "FERNANDO CASANOVA JUSTINIANO", "ci": "4207392", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "34", "tipo": "Titular"}, {"nombre": "VERIDIANA APAZA NAKASHIMA", "ci": "4203463", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "34C", "tipo": "Cónyuge"}, {"nombre": "LUIZ MIGUEL PUERTA VIGO", "ci": "4216869", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "35", "tipo": "Titular"}, {"nombre": "CARMEN GINA GALVEZ GUARDIA", "ci": "4209480", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "35C", "tipo": "Cónyuge"}, {"nombre": "YANETH RUIZ PEREIRA", "ci": "4212767", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "36", "tipo": "Titular"}, {"nombre": "VICTOR FLORES ESPINOZA", "ci": "1286853", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "37", "tipo": "Titular"}, {"nombre": "ALCIDEZ RUIZ PEREIRA", "ci": "4208879", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "38", "tipo": "Titular"}, {"nombre": "FERNANDO CASANOVA MERELES", "ci": "1750342", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "39", "tipo": "Titular"}, {"nombre": "SERGIO VENTURA", "ci": "nan", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "40", "tipo": "Titular"}, {"nombre": "FRNZ REINALDO CASANOVA JUSTINIANO", "ci": "4217194", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "41", "tipo": "Titular"}, {"nombre": "RUBEN JAIME NAKASHIMA FURTADO", "ci": "4207649", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "42", "tipo": "Titular"}, {"nombre": "MARCELA CARPIO BECERRA", "ci": "4210660", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "42C", "tipo": "Cónyuge"}, {"nombre": "ELIANA JUSTINIANO RUIZ", "ci": "1767903", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "43", "tipo": "Titular"}, {"nombre": "MARIELY MANIGUARI BEYUMA", "ci": "nan", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "44", "tipo": "Titular"}, {"nombre": "RASHEL CASANOVA MESIAS", "ci": "4208747", "cargo": "BASE", "comunidad": "NUEVA ESPERANZA", "nro": "45", "tipo": "Titular"}, {"nombre": "MARIA FERNANDA AGUADA", "ci": "4209352", "cargo": "BASE", "comunidad": "SUJAL", "nro": "1", "tipo": "Titular"}, {"nombre": "MARIO COPANA", "ci": "4956271", "cargo": "BASE", "comunidad": "SUJAL", "nro": "2", "tipo": "Titular"}, {"nombre": "AMANDA DIEZ GUALUO", "ci": "5710560", "cargo": "BASE", "comunidad": "SUJAL", "nro": "2C", "tipo": "Cónyuge"}, {"nombre": "MIGUEL ANGEL AGUADA", "ci": "4211568", "cargo": "SECRETARIO GENERAL", "comunidad": "SUJAL", "nro": "3", "tipo": "Titular"}, {"nombre": "EDITH BELTRAN F.", "ci": "4200156", "cargo": "SECRETARIO GENERAL", "comunidad": "SUJAL", "nro": "3C", "tipo": "Cónyuge"}, {"nombre": "ROSARIO ZELADA FLORES", "ci": "5615323", "cargo": "SECRETARIA DE RELACIONES", "comunidad": "SUJAL", "nro": "4", "tipo": "Titular"}, {"nombre": "JORGE MOSUA IVA", "ci": "5623046", "cargo": "SECRETARIA DE RELACIONES", "comunidad": "SUJAL", "nro": "4C", "tipo": "Cónyuge"}, {"nombre": "ESTERIBEL AGUADA", "ci": "4200457", "cargo": "BASE", "comunidad": "SUJAL", "nro": "5", "tipo": "Titular"}, {"nombre": "ANTONIO MARCO AMACIFUEN", "ci": "1764845", "cargo": "BASE", "comunidad": "SUJAL", "nro": "5C", "tipo": "Cónyuge"}, {"nombre": "JORGE SALVATIERRA", "ci": "1750948", "cargo": "SECRETARIO TIERRA Y TERRITORIO", "comunidad": "SUJAL", "nro": "6", "tipo": "Titular"}, {"nombre": "FATIMA BEYUMA CHARRIA", "ci": "1908412", "cargo": "SECRETARIO TIERRA Y TERRITORIO", "comunidad": "SUJAL", "nro": "6C", "tipo": "Cónyuge"}, {"nombre": "SERAFIN SALVATIERRA", "ci": "1761238", "cargo": "SECRETARIO DE HACIENDA", "comunidad": "SUJAL", "nro": "7", "tipo": "Titular"}, {"nombre": "SUELI CURUPI PARADA", "ci": "5710490", "cargo": "SECRETARIO DE HACIENDA", "comunidad": "SUJAL", "nro": "7C", "tipo": "Cónyuge"}, {"nombre": "SANDRO SALVATIERRA A.", "ci": "4200456", "cargo": "SECRETARIO DE DEPORTES", "comunidad": "SUJAL", "nro": "8", "tipo": "Titular"}, {"nombre": "LUIS TAMBO", "ci": "4755397", "cargo": "SECRETARIO DE ACTA", "comunidad": "SUJAL", "nro": "9", "tipo": "Titular"}, {"nombre": "ANYELO NATIVI GUZMAN", "ci": "15564457", "cargo": "VOCAL", "comunidad": "SUJAL", "nro": "10", "tipo": "Titular"}, {"nombre": "KAREL GUSMAN LARICO", "ci": "5713585", "cargo": "VOCAL", "comunidad": "SUJAL", "nro": "10C", "tipo": "Cónyuge"}, {"nombre": "ELIANE AGUADA", "ci": "4211562", "cargo": "BASE", "comunidad": "SUJAL", "nro": "11", "tipo": "Titular"}, {"nombre": "JUNIOR AGUILERA", "ci": "5600233", "cargo": "BASE", "comunidad": "SUJAL", "nro": "11C", "tipo": "Cónyuge"}, {"nombre": "REMIGIO AGUADA", "ci": "1762714", "cargo": "BASE", "comunidad": "SUJAL", "nro": "12", "tipo": "Titular"}, {"nombre": "MIRTHA AMACIFUEN", "ci": "1762232", "cargo": "BASE", "comunidad": "SUJAL", "nro": "12C", "tipo": "Cónyuge"}, {"nombre": "KADRIANA AGUADA", "ci": "4211560", "cargo": "BASE", "comunidad": "SUJAL", "nro": "13", "tipo": "Titular"}, {"nombre": "RUBEN D. CUELLAR P.", "ci": "5591830", "cargo": "BASE", "comunidad": "SUJAL", "nro": "14", "tipo": "Titular"}, {"nombre": "MAYKELINE VELEZ B.", "ci": "4209960", "cargo": "BASE", "comunidad": "SUJAL", "nro": "14C", "tipo": "Cónyuge"}, {"nombre": "JOSE A. VELEZ BARROSO", "ci": "4209946", "cargo": "BASE", "comunidad": "SUJAL", "nro": "15", "tipo": "Titular"}, {"nombre": "ESMERALDA LOPEZ OJARA", "ci": "5700348", "cargo": "BASE", "comunidad": "SUJAL", "nro": "15C", "tipo": "Cónyuge"}, {"nombre": "LUIS FERNANDO AGUADA", "ci": "4211563", "cargo": "BASE", "comunidad": "SUJAL", "nro": "16", "tipo": "Titular"}, {"nombre": "SALME SAIRUMA", "ci": "5704371", "cargo": "BASE", "comunidad": "SUJAL", "nro": "16C", "tipo": "Cónyuge"}, {"nombre": "MARIA BARROSO N.", "ci": "1761982", "cargo": "BASE", "comunidad": "SUJAL", "nro": "17", "tipo": "Titular"}, {"nombre": "GABRIELA ZABALA SOLIS", "ci": "4201984", "cargo": "BASE", "comunidad": "SUJAL", "nro": "18", "tipo": "Titular"}, {"nombre": "ROBELINO RIBERO", "ci": "1764673", "cargo": "BASE", "comunidad": "SUJAL", "nro": "18C", "tipo": "Cónyuge"}, {"nombre": "JAIRO PARRAGA VILLAROEL", "ci": "10849427", "cargo": "BASE", "comunidad": "SUJAL", "nro": "19", "tipo": "Titular"}, {"nombre": "CELIS NATIVI AGUADA", "ci": "4216839", "cargo": "BASE", "comunidad": "SUJAL", "nro": "20", "tipo": "Titular"}, {"nombre": "JAVIER CORDERO S.", "ci": "4211642", "cargo": "BASE", "comunidad": "SUJAL", "nro": "21", "tipo": "Titular"}, {"nombre": "ESTHER VELEZ BARROSO", "ci": "4209947", "cargo": "BASE", "comunidad": "SUJAL", "nro": "21C", "tipo": "Cónyuge"}, {"nombre": "LUCIO MOSUA ZELADA", "ci": "12442450", "cargo": "BASE", "comunidad": "SUJAL", "nro": "22", "tipo": "Titular"}, {"nombre": "ELIAN SALVATIERRA A.", "ci": "4200454", "cargo": "BASE", "comunidad": "SUJAL", "nro": "23", "tipo": "Titular"}, {"nombre": "MARIANA MANIGUARI M.", "ci": "1765364", "cargo": "BASE", "comunidad": "SUJAL", "nro": "23C", "tipo": "Cónyuge"}, {"nombre": "ALFREDO FERNANDEZ", "ci": "4206359", "cargo": "BASE", "comunidad": "SUJAL", "nro": "24", "tipo": "Titular"}, {"nombre": "SILVIA GUZMAN D.", "ci": "4209067", "cargo": "BASE", "comunidad": "SUJAL", "nro": "24C", "tipo": "Cónyuge"}, {"nombre": "JOSE LUIS VELEZ B.", "ci": "12412305", "cargo": "BASE", "comunidad": "SUJAL", "nro": "25", "tipo": "Titular"}, {"nombre": "RAIZA K. ESCALANTE H.", "ci": "14116028", "cargo": "BASE", "comunidad": "SUJAL", "nro": "25C", "tipo": "Cónyuge"}, {"nombre": "HERMAN DURAN ISHITA", "ci": "12412484", "cargo": "BASE", "comunidad": "SUJAL", "nro": "26", "tipo": "Titular"}, {"nombre": "YOHANA AGUILERA I.", "ci": "5708923", "cargo": "BASE", "comunidad": "SUJAL", "nro": "26C", "tipo": "Cónyuge"}, {"nombre": "ARICELY ALVAREZ DA SILVA", "ci": "14429126", "cargo": "BASE", "comunidad": "SUJAL", "nro": "27", "tipo": "Titular"}, {"nombre": "ESLIMER VILLANUEVA DARA", "ci": "12596006", "cargo": "BASE", "comunidad": "SUJAL", "nro": "27C", "tipo": "Cónyuge"}, {"nombre": "MARIA DA SILVA A.", "ci": "1754474", "cargo": "BASE", "comunidad": "SUJAL", "nro": "28", "tipo": "Titular"}, {"nombre": "ESNILE CORDERO SAVATIERRA", "ci": "4209421", "cargo": "BASE", "comunidad": "SUJAL", "nro": "29", "tipo": "Titular"}, {"nombre": "IVAN SUAREZ CHAMARRO", "ci": "4200694", "cargo": "BASE", "comunidad": "SUJAL", "nro": "29C", "tipo": "Cónyuge"}, {"nombre": "YARI ANTONIO GUSMAN DA SILVA", "ci": "4213490", "cargo": "BASE", "comunidad": "SUJAL", "nro": "30", "tipo": "Titular"}, {"nombre": "ROSARIO MARISCAL C.", "ci": "4214649", "cargo": "BASE", "comunidad": "SUJAL", "nro": "31", "tipo": "Titular"}, {"nombre": "ABENETON GONZALES", "ci": "4212730", "cargo": "BASE", "comunidad": "SUJAL", "nro": "31C", "tipo": "Cónyuge"}, {"nombre": "PAOLA MARUPA", "ci": "4212478", "cargo": "BASE", "comunidad": "SUJAL", "nro": "32", "tipo": "Titular"}, {"nombre": "SANTIAGO LOPEZ VARGAS", "ci": "1745980", "cargo": "BASE", "comunidad": "SUJAL", "nro": "33", "tipo": "Titular"}, {"nombre": "ROSAGILDA GARCIA", "ci": "1750419", "cargo": "BASE", "comunidad": "SUJAL", "nro": "33C", "tipo": "Cónyuge"}, {"nombre": "YUNIOR MENDEZ FERREIRA", "ci": "5702546", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "1", "tipo": "Titular"}, {"nombre": "LEA IRARICA AGUILERA", "ci": "4217615", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "1C", "tipo": "Cónyuge"}, {"nombre": "DAN RAMIREZ AGUILERA", "ci": "4217481", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "2", "tipo": "Titular"}, {"nombre": "FREDDY COLLINS MENDOZA", "ci": "4206493", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "3", "tipo": "Titular"}, {"nombre": "ELENA CABRERA AGUADA", "ci": "1764656", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "3C", "tipo": "Cónyuge"}, {"nombre": "DIANA COLLINS SAMPAIO", "ci": "4216521", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "4", "tipo": "Titular"}, {"nombre": "LUIS ENRIQUE COLLINS MENDOZA", "ci": "4200127", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "5", "tipo": "Titular"}, {"nombre": "CLEONICE SAMPAIO FELIX", "ci": "4216282", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "5C", "tipo": "Cónyuge"}, {"nombre": "EDUARDO GOMEZ ROCA", "ci": "4210799", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "6", "tipo": "Titular"}, {"nombre": "YEISY IRARICA AGUILERA", "ci": "4215309", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "6C", "tipo": "Cónyuge"}, {"nombre": "DINA COLLINS MENDOZA", "ci": "4206026", "cargo": "SECRETARIO GENERAL", "comunidad": "NUEVO TRIUNFO", "nro": "7", "tipo": "Titular"}, {"nombre": "ROLY CABRERA AGUADA", "ci": "4206030", "cargo": "SECRETARIO GENERAL", "comunidad": "NUEVO TRIUNFO", "nro": "7C", "tipo": "Cónyuge"}, {"nombre": "DAVID MACHADO CAYALO", "ci": "9734422", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "8", "tipo": "Titular"}, {"nombre": "GABRIELA AGUADA AGUILERA", "ci": "4214050", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "8C", "tipo": "Cónyuge"}, {"nombre": "MELISSA EDITH DURAN ROMERO", "ci": "12660079", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "9", "tipo": "Titular"}, {"nombre": "OMAR MORALES HUANQUIRI", "ci": "9190350", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "9C", "tipo": "Cónyuge"}, {"nombre": "ERWIN GOMEZ ROCA", "ci": "4210734", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "10", "tipo": "Titular"}, {"nombre": "DAYANA MOTA AGUILERA", "ci": "4210957", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "10C", "tipo": "Cónyuge"}, {"nombre": "RICARDO DURAN GUALLANI", "ci": "4214232", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "11", "tipo": "Titular"}, {"nombre": "ROSI IRIS SALAZAR VARGAS", "ci": "5705319", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "11C", "tipo": "Cónyuge"}, {"nombre": "DARIELY AMACIFUEN M.", "ci": "12916393", "cargo": "SECRETARIA DE CONFLICTO", "comunidad": "NUEVO TRIUNFO", "nro": "12", "tipo": "Titular"}, {"nombre": "CRISTIAN NATIVI AGUADA", "ci": "4213548", "cargo": "SECRETARIA DE CONFLICTO", "comunidad": "NUEVO TRIUNFO", "nro": "12C", "tipo": "Cónyuge"}, {"nombre": "ENRIQUE IRARICA GALINDO", "ci": "4201357", "cargo": "SECRETARIO DE DEPORTES", "comunidad": "NUEVO TRIUNFO", "nro": "13", "tipo": "Titular"}, {"nombre": "ASUNTA AGUILERA ROCA", "ci": "4201358", "cargo": "SECRETARIO DE DEPORTES", "comunidad": "NUEVO TRIUNFO", "nro": "13C", "tipo": "Cónyuge"}, {"nombre": "YANINA DURI CABRERA", "ci": "5700210", "cargo": "SECRETARIA DE ACTAS", "comunidad": "NUEVO TRIUNFO", "nro": "14", "tipo": "Titular"}, {"nombre": "EDBERTO MAYNA MORISET", "ci": "12502031", "cargo": "SECRETARIA DE ACTAS", "comunidad": "NUEVO TRIUNFO", "nro": "14C", "tipo": "Cónyuge"}, {"nombre": "MARGARITA AGUILERA ROCA", "ci": "4217558", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "15", "tipo": "Titular"}, {"nombre": "SEBASTIANA MOTA AGUILERA", "ci": "6713617", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "15C", "tipo": "Cónyuge"}, {"nombre": "MOISES LEODAN ARUQUIPA", "ci": "9128705", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "16", "tipo": "Titular"}, {"nombre": "NAYELY GONZALES GOMEZ", "ci": "4206085", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "16C", "tipo": "Cónyuge"}, {"nombre": "PABLO IRARICA AGUILERA", "ci": "4214018", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "17", "tipo": "Titular"}, {"nombre": "FRANCISCO AMACIFUEN SENEPO", "ci": "1750253", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "18", "tipo": "Titular"}, {"nombre": "ROSARIO ROCA LURICI", "ci": "1767334", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "19", "tipo": "Titular"}, {"nombre": "YANELY DURI CABRERA", "ci": "5701970", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "20", "tipo": "Titular"}, {"nombre": "ALFONSO AGUILERA ROCA", "ci": "4201354", "cargo": "SCRETARIA DE RELACIONES", "comunidad": "NUEVO TRIUNFO", "nro": "21", "tipo": "Titular"}, {"nombre": "KERLIN GOMEZ ROCA", "ci": "4210735", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "22", "tipo": "Titular"}, {"nombre": "ALIX IRARICA AGUILERA", "ci": "4214019", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "23", "tipo": "Titular"}, {"nombre": "RAMIRO AGUILERA ROCA", "ci": "4214016", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "24", "tipo": "Titular"}, {"nombre": "CLETO MENDEZ MOTA", "ci": "15389842", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "25", "tipo": "Titular"}, {"nombre": "EDUARDO FERRUFINO O.", "ci": "6466668", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "26", "tipo": "Titular"}, {"nombre": "KEILA COLLINS CABRERA", "ci": "5704577", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "27", "tipo": "Titular"}, {"nombre": "RUBEN CABRERA AGUILERA", "ci": "1749940", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "28", "tipo": "Titular"}, {"nombre": "YAMIULI ARAUZ DASILVA", "ci": "5716089", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "29", "tipo": "Titular"}, {"nombre": "FEDERICO DURI GOMEZ", "ci": "1768304", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "29C", "tipo": "Cónyuge"}, {"nombre": "YOVANI DURI CABRERA", "ci": "4209654", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "30", "tipo": "Titular"}, {"nombre": "JOSIANI AMUTARY TORREZ", "ci": "4217796", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "31", "tipo": "Titular"}, {"nombre": "RODRIGO CABRERA COLLINS", "ci": "4210747", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "31C", "tipo": "Cónyuge"}, {"nombre": "NELSON MENDEZ GOMEZ", "ci": "4201837", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "32", "tipo": "Titular"}, {"nombre": "YANAIRA ARAUZ DASILVA", "ci": "5712269", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "32C", "tipo": "Cónyuge"}, {"nombre": "EVERSON SAUCEDO VARGAS", "ci": "14555056", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "33", "tipo": "Titular"}, {"nombre": "RAIZA CABRERA COLLINS", "ci": "12980169", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "33C", "tipo": "Cónyuge"}, {"nombre": "RONI CABRERA AGUADA", "ci": "1767544", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "34", "tipo": "Titular"}, {"nombre": "FABIOLA BUEZO PUERTA", "ci": "4204242", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "34C", "tipo": "Cónyuge"}, {"nombre": "LANDER GOMEZ ROCA", "ci": "4207418", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "35", "tipo": "Titular"}, {"nombre": "SINDA MOTA FERREIRA", "ci": "1765836", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "36", "tipo": "Titular"}, {"nombre": "DAVID PEREZ MANIGUARI", "ci": "4204047", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "36C", "tipo": "Cónyuge"}, {"nombre": "EUNICE SAMPAIO FELIX", "ci": "5706767", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "37", "tipo": "Titular"}, {"nombre": "JHONNY TIBUBAY CANAMARI", "ci": "4212758", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "38", "tipo": "Titular"}, {"nombre": "DANIELA GONZALES PEREZ", "ci": "12642055", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "38C", "tipo": "Cónyuge"}, {"nombre": "RICARDO GOMEZ ROCA", "ci": "4210733", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "39", "tipo": "Titular"}, {"nombre": "YECCENIA EAMARA ARANA", "ci": "4216038", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "39C", "tipo": "Cónyuge"}, {"nombre": "MAXIMINO ROCA PEREZ", "ci": "4215590", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "40", "tipo": "Titular"}, {"nombre": "YANEHT CARTAGENA", "ci": "5708969", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "40C", "tipo": "Cónyuge"}, {"nombre": "GLESNY PEREZ MANIGUARI", "ci": "1762951", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "41", "tipo": "Titular"}, {"nombre": "ENGELBERTO ROCA PEREZ", "ci": "4205150", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "41C", "tipo": "Cónyuge"}, {"nombre": "YERSON GOMEZ ROCA", "ci": "4210798", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "42", "tipo": "Titular"}, {"nombre": "MABEL ROCA PEREZ", "ci": "4213022", "cargo": "BASE", "comunidad": "NUEVO TRIUNFO", "nro": "42C", "tipo": "Cónyuge"}, {"nombre": "GEOVANNI TUPAS QUETEGUARY", "ci": "4208244", "cargo": "BASE", "comunidad": "nan", "nro": "43", "tipo": "Titular"}, {"nombre": "MARBELIA TABO MACUAPA", "ci": "5715602", "cargo": "BASE", "comunidad": "nan", "nro": "43C", "tipo": "Cónyuge"}, {"nombre": "ABNER  ASAEL COLLINS MENDOZA", "ci": "4214095", "cargo": "nan", "comunidad": "nan", "nro": "44", "tipo": "Titular"}, {"nombre": "SIUDO MOTA FERREIRA", "ci": "5702551", "cargo": "nan", "comunidad": "nan", "nro": "45", "tipo": "Titular"}, {"nombre": "FLORINDA ROCA TORREZ", "ci": "1750269", "cargo": "nan", "comunidad": "nan", "nro": "46", "tipo": "Titular"}, {"nombre": "DENIS ARAUZ CHUQUIPERA", "ci": "4200776", "cargo": "nan", "comunidad": "nan", "nro": "47", "tipo": "Titular"}];
+const IDX = DB.map((p,i) => ({i, k:(p.nombre+' '+p.ci+' '+p.nro+' '+p.comunidad).toLowerCase()}));
+let ventas = JSON.parse(localStorage.getItem('vcomb')||'[]');
+let conf   = JSON.parse(localStorage.getItem('ccomb')||'{"enc":"","pto":"","cuota":40}');
+let comunario=null, stream=null, camOn=false, scanInt=null, flashT=null;
+let modoActual = 'cam';
+
+// ── TABS ─────────────────────────────────────────────────────────
+function goTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  const ids=['venta','hist','cfg'];
+  document.querySelectorAll('.tab')[ids.indexOf(id)].classList.add('on');
+  document.getElementById('scr-'+id).classList.add('on');
+  if(id==='hist') renderHist();
+  if(id==='cfg')  renderConf();
+  if(id!=='venta' && camOn) stopCam();
+}
+
+// ── MODO ─────────────────────────────────────────────────────────
+function setMode(m){
+  modoActual=m;
+  document.getElementById('mb-cam').classList.toggle('on',m==='cam');
+  document.getElementById('mb-bus').classList.toggle('on',m==='bus');
+  document.getElementById('cam-box').classList.toggle('on',m==='cam');
+  document.getElementById('btn-cam').style.display=m==='cam'?'flex':'none';
+  document.getElementById('search-box').classList.toggle('on',m==='bus');
+  if(m!=='cam'&&camOn) stopCam();
+  if(m==='bus') document.getElementById('buscar').focus();
+}
+
+// ── CÁMARA ────────────────────────────────────────────────────────
+async function toggleCam(){
+  if(camOn){stopCam();return;}
+  const st=document.getElementById('cam-st');
+  const btn=document.getElementById('btn-cam');
+  st.textContent='Abriendo cámara...'; st.className='cam-st';
+  btn.disabled=true;
+  try{
+    // Intentar cámara trasera primero
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    }catch(e){
+      stream=await navigator.mediaDevices.getUserMedia({video:true});
+    }
+    const v=document.getElementById('video');
+    v.srcObject=stream;
+    v.onloadedmetadata=function(){
+      v.play().then(()=>{
+        camOn=true;
+        btn.classList.add('stop'); btn.disabled=false;
+        document.getElementById('cam-ico').textContent='⏹';
+        document.getElementById('cam-txt').textContent='Detener escáner';
+        st.textContent='Apunta al código de barra de la credencial';
+        st.className='cam-st';
+        iniciarEscaneo();
+      }).catch(err=>{
+        st.textContent='Error de video: '+err.message; st.className='cam-st er'; btn.disabled=false;
+      });
+    };
+  }catch(err){
+    let msg='No se pudo acceder a la cámara.';
+    if(err.name==='NotAllowedError') msg='⚠ Permiso denegado. Ve a Ajustes de Chrome → Permisos del sitio → Cámara → Permitir.';
+    else if(err.name==='NotFoundError') msg='⚠ No se encontró cámara. Usa el modo búsqueda.';
+    else msg='⚠ '+err.message;
+    st.textContent=msg; st.className='cam-st er'; btn.disabled=false;
+  }
+}
+
+function stopCam(){
+  if(scanInt){clearInterval(scanInt);scanInt=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  document.getElementById('video').srcObject=null;
+  camOn=false;
+  const btn=document.getElementById('btn-cam');
+  btn.classList.remove('stop'); btn.disabled=false;
+  document.getElementById('cam-ico').textContent='📷';
+  document.getElementById('cam-txt').textContent='Activar escáner';
+  document.getElementById('cam-st').textContent='Toca "Activar escáner" y apunta al código de barra';
+  document.getElementById('cam-st').className='cam-st';
+}
+
+function iniciarEscaneo(){
+  const video=document.getElementById('video');
+  const cvs=document.getElementById('cvs');
+  const ctx=cvs.getContext('2d',{willReadFrequently:true});
+
+  // Usar BarcodeDetector nativo de Android si está disponible
+  if('BarcodeDetector' in window){
+    const bd=new BarcodeDetector({formats:['code_128','code_39','qr_code','ean_13','ean_8']});
+    scanInt=setInterval(async()=>{
+      if(!camOn||video.readyState<2) return;
+      try{
+        const codes=await bd.detect(video);
+        if(codes.length>0){procesarCodigo(codes[0].rawValue);}
+      }catch(e){}
+    },300);
+  } else {
+    // Fallback: jsQR
+    scanInt=setInterval(()=>{
+      if(!camOn||video.readyState<2) return;
+      cvs.width=video.videoWidth; cvs.height=video.videoHeight;
+      if(!cvs.width) return;
+      ctx.drawImage(video,0,0);
+      if(typeof jsQR!=='undefined'){
+        const img=ctx.getImageData(0,0,cvs.width,cvs.height);
+        const code=jsQR(img.data,cvs.width,cvs.height);
+        if(code) procesarCodigo(code.data);
+      }
+    },300);
+  }
+}
+
+function procesarCodigo(texto){
+  clearInterval(scanInt); scanInt=null;
+  stopCam();
+  texto=texto.trim();
+  let p=null;
+
+  // Formato barcode: NRO|CI
+  if(texto.includes('|')){
+    const pts=texto.split('|');
+    const ci=(pts.length>=2?pts[1]:pts[0]).trim();
+    // Buscar en DB por CI
+    p=DB.find(x=>x.ci===ci)||DB.find(x=>x.nro===pts[0]);
+    if(!p){
+      // Mostrar igual con datos del código
+      mostrar({nombre:'CI: '+ci,ci:ci,comunidad:'',nro:pts[0]||'',tipo:''});
+      return;
+    }
+  } else {
+    // Intentar buscar como CI directo
+    p=DB.find(x=>x.ci===texto)||DB.find(x=>x.nro===texto);
+    if(!p) p={nombre:texto,ci:texto,comunidad:'',nro:'',tipo:''};
+  }
+  mostrar(p);
+}
+
+// ── BÚSQUEDA ──────────────────────────────────────────────────────
+function buscar(q){
+  const box=document.getElementById('results');
+  q=q.trim().toLowerCase();
+  if(q.length<2){box.innerHTML='<div class="hint">Escribe el <b>CI</b> o el <b>nombre</b> del comunario</div>';return;}
+  const hits=IDX.filter(x=>x.k.includes(q)).slice(0,8);
+  if(!hits.length){box.innerHTML='<div class="hint">No se encontró ningún comunario con "'+q+'"</div>';return;}
+  box.innerHTML=hits.map(x=>{
+    const p=DB[x.i];
+    return `<div class="r-item" onclick="mostrar(DB[${x.i}])">
+      <div class="r-ic">${p.tipo==='Titular'?'👤':'👥'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="r-nom">${p.nombre}</div>
+        <div class="r-sub">CI: ${p.ci||'—'} · ${p.comunidad||'—'} · N°${p.nro}</div>
+      </div>
+      <span class="r-tip ${p.tipo==='Titular'?'rt-t':'rt-c'}">${p.tipo}</span>
+    </div>`;
+  }).join('');
+}
+
+function limpiar(){
+  document.getElementById('buscar').value='';
+  buscar('');
+  document.getElementById('buscar').focus();
+}
+
+// ── COMUNARIO ─────────────────────────────────────────────────────
+function mostrar(p){
+  comunario=p;
+  document.getElementById('c-nom').textContent=p.nombre;
+  document.getElementById('c-com').textContent=p.comunidad||'—';
+  document.getElementById('c-ci').textContent=(p.ci||'—')+(p.tipo?' · '+p.tipo:'');
+  document.getElementById('ccard').classList.add('on');
+  document.getElementById('litg').classList.add('on');
+  document.getElementById('btn-reg').classList.add('on');
+  document.getElementById('litros').value='';
+  setTimeout(()=>document.getElementById('litros').focus(),200);
+}
+
+function resetVenta(){
+  comunario=null;
+  ['ccard','litg'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('btn-reg').classList.remove('on');
+  if(modoActual==='bus'){
+    document.getElementById('buscar').value='';
+    buscar('');
+    document.getElementById('buscar').focus();
+  }
+}
+
+// ── LITROS & REGISTRO ─────────────────────────────────────────────
+function setL(v){document.getElementById('litros').value=v;}
+function registrar(){
+  if(!comunario) return;
+  const lit=parseFloat(document.getElementById('litros').value);
+  if(!lit||lit<=0){
+    document.getElementById('litros').style.borderColor='#e5392a';
+    setTimeout(()=>document.getElementById('litros').style.borderColor='',1500);
+    document.getElementById('litros').focus(); return;
+  }
+  const cuota=parseInt(conf.cuota)||40;
+  if(lit>cuota&&!confirm('⚠ '+lit+'L supera la cuota de '+cuota+'L. ¿Continuar?')) return;
+  const now=new Date();
+  ventas.unshift({id:Date.now(),nombre:comunario.nombre,comunidad:comunario.comunidad||'',ci:comunario.ci||'',nro:comunario.nro||'',tipo:comunario.tipo||'',litros:lit,fecha:now.toLocaleDateString('es-BO'),hora:now.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'}),encargado:conf.enc||'',punto:conf.pto||''});
+  localStorage.setItem('vcomb',JSON.stringify(ventas));
+  updBadge();
+  clearTimeout(flashT);
+  document.getElementById('flash-msg').textContent=comunario.nombre+' — '+lit+' litros';
+  document.getElementById('flash').classList.add('on');
+  flashT=setTimeout(()=>document.getElementById('flash').classList.remove('on'),4000);
+  resetVenta();
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────
+function renderHist(){
+  const tl=ventas.reduce((s,v)=>s+v.litros,0);
+  const coms=new Set(ventas.map(v=>v.comunidad).filter(Boolean)).size;
+  document.getElementById('lt-tot').textContent=tl%1===0?tl:tl.toFixed(1);
+  document.getElementById('s-v').textContent=ventas.length;
+  document.getElementById('s-c').textContent=coms;
+  document.getElementById('s-l').textContent=tl%1===0?tl:tl.toFixed(1);
+  const lista=document.getElementById('lista');
+  if(!ventas.length){lista.innerHTML='<div class="empty">Aún no hay ventas registradas.</div>';return;}
+  lista.innerHTML=ventas.map(v=>`<div class="vi"><div class="vdot"></div><div style="flex:1;min-width:0"><div class="vnm">${v.nombre}</div><div class="vsb">${v.comunidad?v.comunidad+' · ':''}${v.fecha} ${v.hora}</div></div><div class="vlt">${v.litros}L</div></div>`).join('');
+}
+
+// ── EXPORTAR ──────────────────────────────────────────────────────
+function exportar(){
+  if(!ventas.length){alert('No hay ventas para exportar.');return;}
+  const hdr='N°,Nombre,CI,Comunidad,Tipo,Litros,Fecha,Hora,Encargado,Punto';
+  const rows=ventas.map((v,i)=>[i+1,'"'+v.nombre+'"',v.ci,'"'+v.comunidad+'"',v.tipo||'',v.litros,v.fecha,v.hora,'"'+v.encargado+'"','"'+(v.punto||'')+'"'].join(','));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+hdr+'
+'+rows.join('
+')],{type:'text/csv;charset=utf-8;'}));
+  a.download='ventas_combustible_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────
+function renderConf(){
+  document.getElementById('c-enc').value=conf.enc||'';
+  document.getElementById('c-pto').value=conf.pto||'';
+  document.getElementById('c-cuota').value=conf.cuota||40;
+  document.getElementById('c-cnt').textContent=ventas.length+' registros';
+}
+function saveConf(){
+  conf.enc=document.getElementById('c-enc').value;
+  conf.pto=document.getElementById('c-pto').value;
+  conf.cuota=document.getElementById('c-cuota').value||40;
+  localStorage.setItem('ccomb',JSON.stringify(conf));
+}
+function delAll(){
+  if(!confirm('¿Borrar TODOS los registros?')) return;
+  ventas=[];localStorage.setItem('vcomb',JSON.stringify(ventas));
+  updBadge();renderConf();alert('Registros eliminados.');
+}
+function updBadge(){document.getElementById('badge').textContent=ventas.length+' venta'+(ventas.length!==1?'s':'');}
+updBadge();
+// Iniciar en modo búsqueda por defecto hasta que esté en HTTPS
+if(location.protocol!=='https:' && location.hostname!=='localhost'){
+  setMode('bus');
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
