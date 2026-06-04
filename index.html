@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Control Combustible — FSUTCP</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --v:#1a7a45;--vo:#0d3320;--vm:#145c34;--vc:#2daa61;
+  --am:#f5c842;--ro:#e5392a;--bl:#f8faf7;--gr:#8fa898;
+  --c1:#112b1c;--c2:#0f2318;--tx:#e8f5ed;--t2:#8eba9e;
+  --bd:rgba(45,170,97,0.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Sora',sans-serif;background:var(--vo);color:var(--tx);min-height:100dvh;overflow-x:hidden}
+
+/* HEADER */
+.hdr{background:var(--c2);border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.hdr-ico{width:36px;height:36px;background:var(--v);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.hdr h1{font-size:13px;font-weight:700}
+.hdr p{font-size:10px;color:var(--t2);font-family:'DM Mono',monospace}
+.badge{margin-left:auto;background:var(--v);color:#fff;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace;white-space:nowrap}
+
+/* TABS */
+.tabs{display:flex;background:var(--c2);border-bottom:1px solid var(--bd)}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab.on{color:var(--vc);border-color:var(--vc)}
+
+/* SCREENS */
+.scr{display:none;padding:16px}
+.scr.on{display:block}
+
+/* CAMERA */
+.cam-area{background:var(--c1);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.cam-wrap{position:relative;width:100%;padding-top:72%;background:#000}
+#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+#canvas2{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0}
+.cam-ov{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.qr-frame{width:52%;aspect-ratio:1;border:2px solid var(--vc);border-radius:10px;box-shadow:0 0 0 1000px rgba(0,0,0,0.4)}
+.qr-frame::before,.qr-frame::after{content:'';position:absolute;width:18px;height:18px;border-color:var(--am);border-style:solid}
+.qr-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.qr-frame::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.qr-frame{position:relative}
+.cam-st{padding:10px 14px;font-size:11px;color:var(--t2);text-align:center;font-family:'DM Mono',monospace;min-height:36px;display:flex;align-items:center;justify-content:center}
+.cam-st.ok{color:var(--vc)} .cam-st.er{color:var(--ro)}
+
+.btn-cam{width:100%;padding:13px;background:var(--v);color:#fff;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;transition:opacity .15s}
+.btn-cam:active{opacity:.8} .btn-cam.stop{background:#b71c1c}
+
+/* CARD */
+.ccard{background:var(--c1);border:1px solid var(--vc);border-radius:12px;padding:13px;margin-bottom:14px;animation:si .2s ease;display:none}
+.ccard.on{display:block}
+@keyframes si{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.clb{font-size:9px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em}
+.cvl{font-size:15px;font-weight:700;color:var(--vc);margin-top:1px;margin-bottom:8px}
+.cvl.sm{font-size:12px;color:var(--tx)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* LITROS */
+.litg{background:var(--c1);border:1px solid var(--bd);border-radius:12px;padding:13px;margin-bottom:14px;display:none}
+.litg.on{display:block}
+.litg label{font-size:11px;color:var(--t2);display:block;margin-bottom:7px}
+.litwrap{display:flex;align-items:center;gap:8px}
+#litros{flex:1;padding:11px 12px;background:var(--vo);border:1.5px solid var(--v);border-radius:9px;font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--am);text-align:center;outline:none;-webkit-appearance:none;appearance:none}
+#litros:focus{border-color:var(--vc)}
+.unit{font-size:12px;color:var(--t2);font-family:'DM Mono',monospace;flex-shrink:0}
+.qbtns{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.qb{flex:1;min-width:48px;padding:9px 4px;background:var(--vo);border:1px solid var(--bd);border-radius:7px;color:var(--vc);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;text-align:center;transition:background .1s}
+.qb:active{background:var(--vm)}
+
+/* REGISTRAR */
+.btn-reg{width:100%;padding:15px;background:linear-gradient(135deg,var(--vc),var(--v));color:#fff;border:none;border-radius:13px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:opacity .15s;display:none}
+.btn-reg.on{display:flex} .btn-reg:active{opacity:.85}
+
+/* FLASH */
+.flash{display:none;background:#0f3d22;border:1.5px solid var(--vc);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--vc);font-weight:600;align-items:center;gap:9px;animation:si .2s ease}
+.flash.on{display:flex}
+
+/* MANUAL */
+.man-lnk{text-align:center;padding:5px;font-size:11px;color:var(--t2);cursor:pointer;text-decoration:underline;margin-bottom:12px}
+.man-form{display:none;background:var(--c1);border:1px solid var(--bd);border-radius:12px;padding:13px;margin-bottom:14px}
+.man-form.on{display:block}
+.inp{width:100%;padding:11px 12px;background:var(--vo);border:1.5px solid var(--bd);border-radius:9px;font-family:'Sora',sans-serif;font-size:13px;color:var(--tx);outline:none;margin-bottom:9px}
+.inp:focus{border-color:var(--v)}
+.inp::placeholder{color:var(--t2)}
+.btn-man{width:100%;padding:11px;background:var(--vm);border:1px solid var(--v);border-radius:9px;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+
+/* HISTORIAL */
+.stat-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.stat{background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:11px 8px;text-align:center}
+.stat .n{font-size:20px;font-weight:700;color:var(--vc);font-family:'DM Mono',monospace}
+.stat .l{font-size:9px;color:var(--t2);margin-top:1px}
+.ltbar{background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:12px;margin-bottom:13px;display:flex;align-items:center;gap:12px}
+.ltbig{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--am)}
+.ltsub{font-size:10px;color:var(--t2)}
+.btn-exp{width:100%;padding:12px;background:var(--c1);border:1.5px solid var(--v);border-radius:11px;color:var(--vc);font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:16px;transition:background .15s}
+.btn-exp:active{background:var(--vm)}
+.sec-t{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace;margin-bottom:9px}
+.vi{background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:11px 13px;margin-bottom:9px;display:flex;align-items:center;gap:11px}
+.vdot{width:8px;height:8px;border-radius:50%;background:var(--vc);flex-shrink:0}
+.vnm{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vsb{font-size:10px;color:var(--t2);margin-top:1px;font-family:'DM Mono',monospace}
+.vlt{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--am);flex-shrink:0}
+.empty{text-align:center;padding:40px 16px;color:var(--t2);font-size:12px}
+.empty .ic{font-size:36px;margin-bottom:8px}
+
+/* CONFIG */
+.cfg-l{font-size:11px;color:var(--t2);margin-bottom:5px;display:block}
+.cfg-row{background:var(--c1);border:1px solid var(--bd);border-radius:9px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.cfg-row span{font-size:12px}
+.cfg-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--vc)}
+.btn-del{width:100%;padding:12px;background:transparent;border:1.5px solid rgba(229,57,42,0.3);border-radius:11px;color:var(--ro);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn-del:active{background:rgba(229,57,42,0.1)}
+
+/* AYUDA CAMARA */
+.help-box{background:#1a2e1e;border:1px solid var(--bd);border-radius:11px;padding:13px;margin-bottom:14px;font-size:11px;color:var(--t2);line-height:1.7}
+.help-box strong{color:var(--vc)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-ico">⛽</div>
+  <div>
+    <h1>Control Combustible</h1>
+    <p>FSUTCP · Cobija · Pando</p>
+  </div>
+  <div class="badge" id="badge">0 ventas</div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="tab('venta')">📷 Escanear</div>
+  <div class="tab" onclick="tab('hist')">📋 Historial</div>
+  <div class="tab" onclick="tab('cfg')">⚙️ Config</div>
+</div>
+
+<!-- canvas oculto para leer QR -->
+<canvas id="canvas2" style="display:none"></canvas>
+
+<!-- ══ VENTA ══ -->
+<div class="scr on" id="scr-venta">
+
+  <div id="flash" class="flash">✓ <span id="flash-msg">Venta registrada</span></div>
+
+  <!-- Instrucción para Honor -->
+  <div class="help-box" id="help-honor">
+    <strong>📱 Para activar la cámara en tu Honor:</strong><br>
+    1. Toca el botón verde "Activar escáner" aquí abajo<br>
+    2. Si aparece una ventana pidiendo permiso → toca <strong>"Permitir"</strong><br>
+    3. Si no funciona: abre Chrome → Menú (···) → Configuración → Privacidad → Configuración del sitio → Cámara → Permitir
+  </div>
+
+  <div class="cam-area">
+    <div class="cam-wrap">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas2" style="display:none"></canvas>
+      <div class="cam-ov"><div class="qr-frame"></div></div>
+    </div>
+    <div class="cam-st" id="cam-st">Toca "Activar escáner" y apunta al código de barra</div>
+  </div>
+
+  <button class="btn-cam" id="btn-cam" onclick="toggleCam()">
+    <span id="cam-ico">📷</span>
+    <span id="cam-txt">Activar escáner</span>
+  </button>
+
+  <div class="ccard" id="ccard">
+    <div class="clb">Comunario identificado</div>
+    <div class="cvl" id="c-nom">—</div>
+    <div class="row2">
+      <div><div class="clb">Comunidad</div><div class="cvl sm" id="c-com">—</div></div>
+      <div><div class="clb">CI / Código</div><div class="cvl sm" id="c-ci">—</div></div>
+    </div>
+  </div>
+
+  <div class="litg" id="litg">
+    <label>Cantidad a despachar</label>
+    <div class="litwrap">
+      <input type="number" id="litros" placeholder="0" min="0.5" max="500" step="0.5" inputmode="decimal">
+      <span class="unit">litros</span>
+    </div>
+    <div class="qbtns">
+      <button class="qb" onclick="setL(5)">5L</button>
+      <button class="qb" onclick="setL(10)">10L</button>
+      <button class="qb" onclick="setL(20)">20L</button>
+      <button class="qb" onclick="setL(30)">30L</button>
+      <button class="qb" onclick="setL(40)">40L</button>
+    </div>
+  </div>
+
+  <button class="btn-reg on" id="btn-reg" onclick="registrar()">✓ &nbsp;Registrar venta</button>
+
+  <div class="man-lnk" onclick="toggleMan()">¿Sin QR? → Ingreso manual</div>
+  <div class="man-form" id="man-form">
+    <input class="inp" id="m-nom" placeholder="Nombre completo" type="text" autocomplete="off">
+    <input class="inp" id="m-com" placeholder="Comunidad" type="text" autocomplete="off">
+    <input class="inp" id="m-ci"  placeholder="CI o código" type="text" autocomplete="off">
+    <button class="btn-man" onclick="useManual()">Usar estos datos →</button>
+  </div>
+</div>
+
+<!-- ══ HISTORIAL ══ -->
+<div class="scr" id="scr-hist">
+  <div class="ltbar">
+    <span style="font-size:26px">🛢️</span>
+    <div>
+      <div class="ltbig" id="lt-tot">0</div>
+      <div class="ltsub">litros despachados (total)</div>
+    </div>
+  </div>
+  <div class="stat-bar">
+    <div class="stat"><div class="n" id="s-v">0</div><div class="l">Ventas</div></div>
+    <div class="stat"><div class="n" id="s-c">0</div><div class="l">Comunidades</div></div>
+    <div class="stat"><div class="n" id="s-l">0</div><div class="l">Litros</div></div>
+  </div>
+  <button class="btn-exp" onclick="exportar()">📥 &nbsp;Exportar reporte CSV (Excel)</button>
+  <div class="sec-t">Registro de ventas</div>
+  <div id="lista"></div>
+</div>
+
+<!-- ══ CONFIG ══ -->
+<div class="scr" id="scr-cfg">
+  <div class="sec-t">Punto de venta</div>
+  <label class="cfg-l">Nombre del encargado</label>
+  <input class="inp" id="c-enc" placeholder="Nombre del encargado" oninput="saveConf()">
+  <label class="cfg-l">Comunidad / punto base</label>
+  <input class="inp" id="c-pto" placeholder="Ej: Cobija Centro" oninput="saveConf()">
+  <br>
+  <div class="sec-t">Límite por persona</div>
+  <label class="cfg-l">Cuota máxima de litros por visita</label>
+  <input class="inp" id="c-cuota" type="number" placeholder="40" oninput="saveConf()" style="font-family:'DM Mono',monospace;font-size:18px">
+  <br>
+  <div class="sec-t">Datos guardados</div>
+  <div class="cfg-row">
+    <span>Total registros</span>
+    <span class="cfg-val" id="c-cnt">0</span>
+  </div>
+  <div class="cfg-row" style="cursor:pointer" onclick="exportar()">
+    <span>Exportar a Excel (CSV)</span>
+    <span class="cfg-val">↓</span>
+  </div>
+  <button class="btn-del" onclick="delAll()">🗑 Borrar todos los registros</button>
+</div>
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────
+let ventas = JSON.parse(localStorage.getItem('vcomb') || '[]');
+let conf   = JSON.parse(localStorage.getItem('ccomb') || '{"enc":"","pto":"","cuota":40}');
+let comunario = null;
+let stream = null;
+let camOn  = false;
+let scanTimer = null;
+let flashT = null;
+
+// ── Tabs ──────────────────────────────────────────────────────────
+function tab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('on'));
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  const ids = ['venta','hist','cfg'];
+  document.querySelectorAll('.tab')[ids.indexOf(id)].classList.add('on');
+  document.getElementById('scr-' + id).classList.add('on');
+  if (id === 'hist') renderHist();
+  if (id === 'cfg')  renderConf();
+  if (id !== 'venta' && camOn) stopCam();
+}
+
+// ── Cámara ────────────────────────────────────────────────────────
+async function toggleCam() {
+  if (camOn) { stopCam(); return; }
+  startCam();
+}
+
+async function startCam() {
+  const st = document.getElementById('cam-st');
+  const btn = document.getElementById('btn-cam');
+  st.textContent = 'Abriendo cámara...';
+  st.className = 'cam-st';
+  btn.disabled = true;
+
+  // Hide help after first attempt
+  document.getElementById('help-honor').style.display = 'none';
+
+  try {
+    // Try environment (back) camera first, fallback to any camera
+    let constraints = { video: { facingMode: { ideal: 'environment' } } };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch(e) {
+      // Fallback: any camera
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+
+    // Honor/Android needs explicit play call
+    video.onloadedmetadata = () => {
+      video.play().then(() => {
+        camOn = true;
+        btn.classList.add('stop');
+        btn.disabled = false;
+        document.getElementById('cam-ico').textContent = '⏹';
+        document.getElementById('cam-txt').textContent = 'Detener cámara';
+        st.textContent = 'Apunta al código de barra de la credencial';
+        st.className = 'cam-st';
+        startScan();
+      }).catch(err => {
+        showCamErr('No se pudo iniciar video: ' + err.message);
+        btn.disabled = false;
+      });
+    };
+    video.onerror = () => {
+      showCamErr('Error de video');
+      btn.disabled = false;
+    };
+
+  } catch(err) {
+    let msg = 'No se pudo acceder a la cámara.';
+    if (err.name === 'NotAllowedError')
+      msg = '⚠ Permiso denegado. Ve a Chrome → Configuración → Privacidad → Cámara → Permitir para este sitio.';
+    else if (err.name === 'NotFoundError')
+      msg = '⚠ No se encontró cámara. Usa el ingreso manual.';
+    else
+      msg = '⚠ ' + err.message + '. Usa ingreso manual abajo.';
+    showCamErr(msg);
+    btn.disabled = false;
+    document.getElementById('help-honor').style.display = 'block';
+  }
+}
+
+function showCamErr(msg) {
+  const st = document.getElementById('cam-st');
+  st.textContent = msg;
+  st.className = 'cam-st er';
+}
+
+function stopCam() {
+  if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('video').srcObject = null;
+  camOn = false;
+  const btn = document.getElementById('btn-cam');
+  btn.classList.remove('stop');
+  document.getElementById('cam-ico').textContent = '📷';
+  document.getElementById('cam-txt').textContent = 'Activar escáner';
+  document.getElementById('cam-st').textContent = 'Toca "Activar escáner" y apunta al código de barra';
+  document.getElementById('cam-st').className = 'cam-st';
+}
+
+// ── Escaneo QR ────────────────────────────────────────────────────
+function startScan() {
+  const video   = document.getElementById('video');
+  const canvas  = document.getElementById('canvas2');
+  const ctx     = canvas.getContext('2d', { willReadFrequently: true });
+
+  scanTimer = setInterval(() => {
+    if (!camOn || video.readyState < video.HAVE_ENOUGH_DATA) return;
+    const W = video.videoWidth, H = video.videoHeight;
+    if (!W || !H) return;
+    canvas.width = W; canvas.height = H;
+    ctx.drawImage(video, 0, 0, W, H);
+    const imgData = ctx.getImageData(0, 0, W, H);
+
+    // Use BarcodeDetector if available (Android Chrome 83+)
+    if ('BarcodeDetector' in window) {
+      new BarcodeDetector({ formats: ['code_128','code_39','ean_13','ean_8','upc_a','upc_e'] })
+        .detect(canvas)
+        .then(codes => {
+          if (codes.length > 0) processQR(codes[0].rawValue);
+        })
+        .catch(() => {});
+    }
+    // Also try manual decode via jsQR if loaded
+    else if (typeof jsQR !== 'undefined') {
+      const code = jsQR(imgData.data, W, H, { inversionAttempts: 'dontInvert' });
+      if (code) processQR(code.data);
+    }
+  }, 250);
+}
+
+function processQR(text) {
+  clearInterval(scanTimer); scanTimer = null;
+  stopCam();
+
+  let d = null;
+  text = text.trim();
+
+  // Format barcode: NRO|CI  (short format from credentials)
+  if (text.includes('|')) {
+    const p = text.split('|');
+    if (p.length === 2) {
+      // Barcode format: NRO|CI — look up name from registry if available
+      d = { nro: p[0] || '', ci: p[1] || '', nombre: 'CI: ' + p[1], comunidad: '' };
+    } else {
+      // QR format: NRO|CI|NOMBRE|COMUNIDAD
+      d = { nro: p[0]||'', ci: p[1]||'', nombre: p[2]||p[1]||'', comunidad: p[3]||'' };
+    }
+  } else {
+    try {
+      const obj = JSON.parse(text);
+      d = { nombre: obj.nombre||'', ci: obj.ci||'', comunidad: obj.comunidad||'', nro: obj.nro||'' };
+    } catch {
+      // Plain text = CI number or name
+      d = { nombre: text, ci: text, comunidad: '', nro: '' };
+    }
+  }
+
+  if (!d.nombre && !d.ci) {
+    document.getElementById('cam-st').textContent = '⚠ Código no reconocido. Intenta de nuevo.';
+    document.getElementById('cam-st').className = 'cam-st er';
+    setTimeout(() => startCam(), 2000);
+    return;
+  }
+  showComunario(d);
+}
+
+function showComunario(d) {
+  comunario = d;
+  document.getElementById('c-nom').textContent = d.nombre;
+  document.getElementById('c-com').textContent = d.comunidad || '—';
+  document.getElementById('c-ci').textContent  = d.ci || d.nro || '—';
+  document.getElementById('ccard').classList.add('on');
+  document.getElementById('litg').classList.add('on');
+  document.getElementById('btn-reg').classList.add('on');
+  document.getElementById('cam-st').textContent = '✓ Comunario identificado';
+  document.getElementById('cam-st').className = 'cam-st ok';
+  document.getElementById('litros').value = '';
+  setTimeout(() => document.getElementById('litros').focus(), 300);
+}
+
+// ── Litros ────────────────────────────────────────────────────────
+function setL(v) { document.getElementById('litros').value = v; }
+
+// ── Registrar ────────────────────────────────────────────────────
+function registrar() {
+  if (!comunario) return;
+  const lit = parseFloat(document.getElementById('litros').value);
+  if (!lit || lit <= 0) {
+    document.getElementById('litros').style.borderColor = 'var(--ro)';
+    setTimeout(() => document.getElementById('litros').style.borderColor = '', 1500);
+    document.getElementById('litros').focus();
+    return;
+  }
+  const cuota = parseInt(conf.cuota) || 40;
+  if (lit > cuota && !confirm(`⚠ ${lit}L supera la cuota de ${cuota}L. ¿Continuar?`)) return;
+
+  const now = new Date();
+  const v = {
+    id: Date.now(),
+    nombre:    comunario.nombre,
+    comunidad: comunario.comunidad || '',
+    ci:        comunario.ci || '',
+    nro:       comunario.nro || '',
+    litros:    lit,
+    fecha:     now.toLocaleDateString('es-BO'),
+    hora:      now.toLocaleTimeString('es-BO', { hour:'2-digit', minute:'2-digit' }),
+    encargado: conf.enc || '',
+    punto:     conf.pto || ''
+  };
+  ventas.unshift(v);
+  localStorage.setItem('vcomb', JSON.stringify(ventas));
+  updBadge();
+
+  clearTimeout(flashT);
+  document.getElementById('flash-msg').textContent = `${v.nombre} — ${lit} litros`;
+  document.getElementById('flash').classList.add('on');
+  flashT = setTimeout(() => document.getElementById('flash').classList.remove('on'), 3500);
+
+  // Reset
+  comunario = null;
+  ['ccard','litg','btn-reg'].forEach(id => document.getElementById(id).classList.remove('on'));
+  document.getElementById('litros').value = '';
+}
+
+// ── Manual ────────────────────────────────────────────────────────
+function toggleMan() { document.getElementById('man-form').classList.toggle('on'); }
+function useManual() {
+  const n = document.getElementById('m-nom').value.trim();
+  if (!n) { document.getElementById('m-nom').focus(); return; }
+  showComunario({
+    nombre:    n,
+    comunidad: document.getElementById('m-com').value.trim(),
+    ci:        document.getElementById('m-ci').value.trim(),
+    nro:       ''
+  });
+  document.getElementById('man-form').classList.remove('on');
+  if (camOn) stopCam();
+}
+
+// ── Historial ────────────────────────────────────────────────────
+function renderHist() {
+  const tl = ventas.reduce((s,v) => s + v.litros, 0);
+  const coms = new Set(ventas.map(v => v.comunidad).filter(Boolean)).size;
+  document.getElementById('lt-tot').textContent = tl % 1 === 0 ? tl : tl.toFixed(1);
+  document.getElementById('s-v').textContent = ventas.length;
+  document.getElementById('s-c').textContent = coms;
+  document.getElementById('s-l').textContent = tl % 1 === 0 ? tl : tl.toFixed(1);
+  const lista = document.getElementById('lista');
+  if (!ventas.length) {
+    lista.innerHTML = '<div class="empty"><div class="ic">📋</div>Aún no hay ventas.<br>Escanea una credencial para empezar.</div>';
+    return;
+  }
+  lista.innerHTML = ventas.map(v => `
+    <div class="vi">
+      <div class="vdot"></div>
+      <div style="flex:1;min-width:0">
+        <div class="vnm">${v.nombre}</div>
+        <div class="vsb">${v.comunidad ? v.comunidad + ' · ' : ''}${v.fecha} ${v.hora}</div>
+      </div>
+      <div class="vlt">${v.litros}L</div>
+    </div>`).join('');
+}
+
+// ── Exportar ─────────────────────────────────────────────────────
+function exportar() {
+  if (!ventas.length) { alert('No hay ventas para exportar.'); return; }
+  const hdr = 'N°,Nombre,Comunidad,CI,Litros,Fecha,Hora,Encargado,Punto';
+  const rows = ventas.map((v,i) =>
+    [i+1, `"${v.nombre}"`, `"${v.comunidad}"`, v.ci, v.litros, v.fecha, v.hora, `"${v.encargado}"`, `"${v.punto}"`].join(',')
+  );
+  const csv = '\uFEFF' + hdr + '\n' + rows.join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'ventas_combustible_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Config ────────────────────────────────────────────────────────
+function renderConf() {
+  document.getElementById('c-enc').value   = conf.enc   || '';
+  document.getElementById('c-pto').value   = conf.pto   || '';
+  document.getElementById('c-cuota').value = conf.cuota || 40;
+  document.getElementById('c-cnt').textContent = ventas.length + ' registros';
+}
+function saveConf() {
+  conf.enc   = document.getElementById('c-enc').value;
+  conf.pto   = document.getElementById('c-pto').value;
+  conf.cuota = document.getElementById('c-cuota').value || 40;
+  localStorage.setItem('ccomb', JSON.stringify(conf));
+}
+function delAll() {
+  if (!confirm('¿Borrar TODOS los registros? No se puede deshacer.')) return;
+  ventas = []; localStorage.setItem('vcomb', JSON.stringify(ventas));
+  updBadge(); renderConf(); alert('Registros eliminados.');
+}
+
+function updBadge() {
+  document.getElementById('badge').textContent = ventas.length + ' venta' + (ventas.length !== 1 ? 's' : '');
+}
+updBadge();
+</script>
+
+<!-- jsQR como fallback para navegadores sin BarcodeDetector -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
